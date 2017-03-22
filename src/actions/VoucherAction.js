@@ -19,6 +19,9 @@ class VoucherAction {
         return voucher;
     }
 
+    swapRandomCodeSelected(flag) {
+        return flag;
+    }
 }
 
 export default VoucherAction;

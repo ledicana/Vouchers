@@ -6,6 +6,7 @@ import {fromJS, List} from 'immutable';
 import {createStore} from 'alt-utils/lib/decorators';
 import VoucherAction from '../actions/VoucherAction';
 import {handleFetch} from '../utils/fetchHandler';
+import validationFlags from '../utils/validationFlags';
 
 @createStore(alt)
 class VoucherStore {
@@ -28,8 +29,13 @@ class VoucherStore {
                 isCombinable: false,
                 remainingUses: '',
                 creationTime: new Date(),
-                expirationTime: ''
-            })
+                expirationTime: '',
+                prefixForCodes: '',
+                numberOfCodes: ''
+            }),
+
+            randomCodeSelected: false
+
         };
     }
 
@@ -38,6 +44,16 @@ class VoucherStore {
             voucher: this.state.voucher.set(field, value)
         });
     }
+
+    swapRandomCodeSelected(flag) {
+        this.setState({
+            randomCodeSelected: !flag
+        });
+        if(!validationFlags.isCodeLength) {
+            validationFlags.isCodeLength = !validationFlags.isCodeLength;
+        }
+    }
+
 
     getVoucherData() {
         let fetchUrl='http://localhost:2475/api/Values/get';
@@ -55,37 +71,66 @@ class VoucherStore {
 
     saveNewVoucher(voucher) {
 
-        const fetchData = JSON.stringify( {
-            locationId: voucher.get('locationId'),
-            branchId: voucher.get('branchId'),
-            code: voucher.get('code'),
-            name: voucher.get('name'),
-            discount: voucher.get('discount'),
-            discountType: voucher.get('discountType'),
-            isCombinable: voucher.get('isCombinable'),
-            remainingUses: voucher.get('remainingUses'),
-            creationTime: voucher.get('creationTime'),
-            expirationTime: voucher.get('expirationTime')
-        });
+        let arrayOfCodes = [];
+        let serverPostSuccess = true;
+        if (voucher.get('code') === '') {
+            let newCode = this.generateRandomCodes(1, '');
+            voucher = voucher.set('code', newCode[0]);
+        }
 
-        fetch('http://localhost:2475/api/Values/Post', {
-            method: 'POST',
-            mode: 'cors',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-        body: fetchData
-        }).then(data => {
-            if(data.status=== 200) {
-                chayns.dialog.alert(null, 'Inserting new voucher suceeded!');
-                console.info('SavePersonAddress success', {res: data, req: fetchData});
+        if (this.state.randomCodeSelected === true) {
+            arrayOfCodes = this.generateRandomCodes(this.state.voucher.get('numberOfCodes'), this.state.voucher.get('prefixForCodes'));
+        } else {
+            arrayOfCodes.push(voucher.get('code'));
+        }
+
+        for (let i in arrayOfCodes) {
+            const fetchData = JSON.stringify({
+                locationId: voucher.get('locationId'),
+                branchId: voucher.get('branchId'),
+                code: arrayOfCodes[i],
+                name: voucher.get('name'),
+                discount: voucher.get('discount'),
+                discountType: voucher.get('discountType'),
+                isCombinable: voucher.get('isCombinable'),
+                remainingUses: voucher.get('remainingUses'),
+                creationTime: voucher.get('creationTime'),
+                expirationTime: voucher.get('expirationTime'),
+            });
+
+            fetch('http://localhost:2475/api/Values/Post', {
+                method: 'POST',
+                mode: 'cors',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: fetchData
+            }).then(data => {
+                console.log(data, data.status);
+                serverPostSuccess = (data.status === 200) ? true : false;
                 VoucherAction.getVoucherData();
+            }).catch(::console.error);
+        }
+
+            if (serverPostSuccess === true) {
+                console.log('serverpostsucces',serverPostSuccess);
+                chayns.dialog.alert(null, 'Inserting new voucher suceeded!');
             } else {
+                console.log('serverpostsucces',serverPostSuccess);
                 chayns.dialog.alert(null, 'Inserting new voucher failed. Please review your data.');
-                console.error('SavePersonAddress failed', {res: data, req: fetchData});
             }
 
-        }).catch(::console.error);
+    }
+
+    generateRandomCodes (numberOfCodes, prefix) {
+        let voucher_codes = require('voucher-code-generator');
+
+        return (voucher_codes.generate({
+                length: 10 - prefix.length,
+                count: numberOfCodes,
+                prefix: prefix
+            })
+        );
     }
 }
 export default VoucherStore;

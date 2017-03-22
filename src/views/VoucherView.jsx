@@ -10,7 +10,8 @@ class VoucherView extends React.Component {
 
     static propTypes = {
         vouchers: React.PropTypes.any,
-        voucher: React.PropTypes.object
+        voucher: React.PropTypes.object,
+        randomCodeSelected: React.PropTypes.bool
     };
 
     static getStores() {
@@ -26,7 +27,7 @@ class VoucherView extends React.Component {
     };
 
     render() {
-        const {vouchers, voucher} = this.props;
+        const {vouchers, voucher, randomCodeSelected} = this.props;
         return (
                 <div className="tapp__content content">
                     <VoucherList
@@ -34,6 +35,7 @@ class VoucherView extends React.Component {
                     />
                     <InputComponent
                         voucher={voucher}
+                        randomCodeSelected={randomCodeSelected}
                     />
                 </div>
 
