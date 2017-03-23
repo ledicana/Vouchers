@@ -1,0 +1,30 @@
+.accordion_item {
+
+ .hidden {
+    display: none;
+ }
+ .input {
+   width: 100%;
+   margin-bottom: 5px;
+ }
+ .button {
+    margin-top: 15px;
+    margin-bottom: 15px;
+ }
+ .checkBox {
+    margin-top: 10px;
+    margin-bottom: 5px;
+ }
+  .invalid {
+    color: red !important;
+  }
+  .invisible {
+    display: none;
+  }
+
+  .button--disabled {
+    pointer-events: none;
+  }
+}
+
+
